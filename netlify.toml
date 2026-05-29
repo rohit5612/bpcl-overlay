@@ -1,0 +1,8 @@
+# Overlay site on Netlify (repo root). Admin site: duplicate build settings with build:admin.
+
+[build]
+  command = "npm ci && npm run build:overlay"
+  publish = "apps/overlay-web/dist"
+
+[build.environment]
+  NPM_FLAGS = "--include=dev"

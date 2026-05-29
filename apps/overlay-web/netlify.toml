@@ -1,0 +1,5 @@
+# Use when Netlify "Base directory" is apps/overlay-web.
+
+[build]
+  command = "cd ../.. && npm ci && npm run build:overlay"
+  publish = "dist"
