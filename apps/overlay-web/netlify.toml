@@ -1,5 +1,5 @@
-# Use when Netlify "Base directory" is apps/overlay-web.
+# Netlify runs from repo root when packagePath is apps/overlay-web — do not cd ../..
 
 [build]
-  command = "cd ../.. && npm ci && npm run build:overlay"
-  publish = "dist"
+  command = "npm ci && npm run build:overlay"
+  publish = "apps/overlay-web/dist"

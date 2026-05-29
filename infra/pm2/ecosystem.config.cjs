@@ -1,5 +1,5 @@
-# PM2 process for BPC broadcast-api (single instance for in-process websockets).
-# Build first: `npm run build --workspace=broadcast-api`
+// PM2 process for BPC broadcast-api (single instance for in-process websockets).
+// Build first: npm run build --workspace=@bpc/shared-types && ... broadcast-api
 
 module.exports = {
   apps: [

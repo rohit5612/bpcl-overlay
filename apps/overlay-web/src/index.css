@@ -29,15 +29,13 @@ body,
   background: transparent;
 }
 
+/* Trajan Pro files are not bundled (licensed). Cinzel from index.html is the web fallback. */
 @font-face {
   font-family: "Trajan Pro";
   src:
-    url("/fonts/TrajanPro-Regular.woff2") format("woff2"),
-    url("/fonts/TrajanPro-Regular.woff") format("woff"),
-    url("/fonts/TrajanPro-Regular.otf") format("opentype"),
-    url("/fonts/trajanpro3.otf") format("opentype"),
     local("Trajan Pro"),
-    local("TrajanPro-Regular");
+    local("TrajanPro-Regular"),
+    local("Trajan Pro 3");
   font-weight: 400 700;
   font-style: normal;
   font-display: swap;
