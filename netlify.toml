@@ -1,5 +1,0 @@
-# Default for overlay site when base directory is repo root (not apps/overlay-web).
-
-[build]
-  command = "npm ci && npm run build:overlay"
-  publish = "apps/overlay-web/dist"

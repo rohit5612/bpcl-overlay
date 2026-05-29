@@ -1,0 +1,5 @@
+# Admin Netlify site only — set Base directory to apps/admin-web in Netlify UI.
+
+[build]
+  command = "cd ../.. && npm ci && npm run build:admin"
+  publish = "dist"
