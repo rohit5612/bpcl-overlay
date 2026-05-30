@@ -1,5 +1,9 @@
-# Overlay site — Base directory must be apps/overlay-web (Netlify cwd = this folder).
+# Overlay Netlify site — set Base directory to apps/overlay-web in Netlify UI.
+# Or use infra/netlify/overlay-site.toml settings at repo root (second site).
 
 [build]
   command = "cd ../.. && npm ci && npm run build:overlay"
   publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"

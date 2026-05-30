@@ -141,6 +141,15 @@ export function applyOverlayPatch(
       ...(prev.timers ?? {}),
       ...patch.timers,
     };
+    if (patch.timers.gameStartCountdown !== undefined) {
+      nextTimers = {
+        ...nextTimers,
+        gameStartCountdown: {
+          ...(prev.timers?.gameStartCountdown ?? {}),
+          ...patch.timers.gameStartCountdown,
+        },
+      };
+    }
   }
 
   const nextDraft = mergeDraft(prev.draft, patch.draft);

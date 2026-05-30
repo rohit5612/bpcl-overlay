@@ -16,12 +16,14 @@ import io from "socket.io-client";
 
 import { apiFetch, loadConnection, saveConnection } from "./api";
 import { GsiDraftControls, StatsWorkspace } from "./StatsWorkspace";
+import { GameStartTimerPanel } from "./GameStartTimerPanel";
 import { MatchSetupPanel } from "./MatchSetupPanel";
 import { routeVisible } from "./visibility";
 
 /** Overlay routes exposed in the producer visibility panel */
 const ADMIN_VIS_ROUTES = [
   "draft",
+  "startingsoon",
   "herostats",
   "sponsors",
   "matchup",
@@ -31,6 +33,7 @@ const ADMIN_VIS_ROUTES = [
 
 const ROUTE_LABELS: Record<(typeof ADMIN_VIS_ROUTES)[number], string> = {
   draft: "Draft",
+  startingsoon: "Game start timer",
   herostats: "Hero stats",
   sponsors: "Sponsors",
   matchup: "Matchup",
@@ -137,6 +140,16 @@ export function ProducerDashboard() {
         <ConnectCard origin={origin} token={token} setO={setOrigin} setT={setToken} onSave={() => { persist(); void refresh(); }} />
         <div className="space-y-10">
           <EmergencyRow onHide={() => void hideAll()} onReset={() => void resetEnv()} onSnap={() => void refresh()} />
+          <GameStartTimerPanel
+            state={state}
+            busy={busy}
+            onPatch={patch}
+            onVisibility={(visible) =>
+              patch({
+                overlayVisibility: { startingsoon: visible ? "visible" : "hidden" },
+              })
+            }
+          />
           <ObsBlock origin={origin} token={token} />
           <MatchSetupPanel
             origin={origin}

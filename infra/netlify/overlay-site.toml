@@ -1,0 +1,12 @@
+# Copy these settings into a SECOND Netlify site (overlay) — Netlify only reads
+# one netlify.toml per site at the repo root by default (root file is for admin).
+
+[build]
+  command = "npm ci && npm run build:overlay"
+  publish = "apps/overlay-web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+  # Set in Netlify UI (required):
+  # VITE_BROADCAST_API_ORIGIN = https://broadcast.yourdomain.com
+  # VITE_SOCKET_TOKEN = <same as BROADCAST_SECRET on API>

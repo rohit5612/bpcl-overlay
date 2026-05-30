@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+import { gameStartCountdownSchema } from "./game-start-countdown.js";
+
 export * from "./hero-assets.js";
 export * from "./hero-slug.js";
 export * from "./match-players.js";
+export * from "./game-start-countdown.js";
 
 export const OVERLAY_ROUTES = [
   "draft",
@@ -383,6 +386,7 @@ export const broadcastTimersSchema = z.object({
   pauseMessage: z.string().optional(),
   startingSoonEta: z.string().optional(),
   postgameNotes: z.string().optional(),
+  gameStartCountdown: gameStartCountdownSchema.optional(),
 });
 
 export type BroadcastTimers = z.infer<typeof broadcastTimersSchema>;

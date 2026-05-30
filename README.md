@@ -19,11 +19,29 @@ Routes: overlay browser sources load paths `/draft`, `/game`, `/lowerthird`, `/p
 
 ### Build
 
-`npm run build --workspaces --if-present`
+```bash
+npm run build:deploy
+```
 
-Deploy SPA `dist/` folders behind Nginx; run broadcast API behind reverse proxy with WebSocket upgrade on `/socket.io/`. See [`infra/nginx/bpc-broadcast.sample.conf`](infra/nginx/bpc-broadcast.sample.conf) and [`infra/pm2/ecosystem.config.cjs`](infra/pm2/ecosystem.config.cjs).
+(or `npm run build --workspaces --if-present`)
 
-OBS WebSocket typically needs VPN/Tailscale or a LAN relay from EC2 to caster — documented in [`infra/docs/OBS.md`](infra/docs/OBS.md).
+### Deploy (production)
+
+Full checklist: **[`infra/docs/DEPLOY.md`](infra/docs/DEPLOY.md)**
+
+| Component | Host | Notes |
+|-----------|------|--------|
+| **broadcast-api** | VPS + PM2 | `npm run build --workspace=broadcast-api`, nginx + `/socket.io/` |
+| **admin-web** | Netlify site A | Root `netlify.toml` → `apps/admin-web/dist` |
+| **overlay-web** | Netlify site B | `npm run build:overlay` → `apps/overlay-web/dist`, set `VITE_*` env |
+
+Netlify **admin**: build `npm ci && npm run build:admin`, publish `apps/admin-web/dist`.
+
+Netlify **overlay**: separate site; build `npm run build:overlay`, publish `apps/overlay-web/dist`; env `VITE_BROADCAST_API_ORIGIN` + `VITE_SOCKET_TOKEN` (must match API `BROADCAST_SECRET`).
+
+Game start timer OBS source: `https://<overlay>/startingsoon` — control from admin **Game start timer** panel.
+
+Also: [`infra/nginx/bpc-broadcast.sample.conf`](infra/nginx/bpc-broadcast.sample.conf), [`infra/pm2/ecosystem.config.cjs`](infra/pm2/ecosystem.config.cjs), [`infra/docs/OBS.md`](infra/docs/OBS.md).
 
 ### Stack
 

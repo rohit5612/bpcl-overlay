@@ -9,6 +9,7 @@
     "build": "npm run build --workspaces --if-present",
     "build:overlay": "npm run build --workspace=@bpc/shared-types && npm run build --workspace=overlay-web",
     "build:admin": "npm run build --workspace=@bpc/shared-types && npm run build --workspace=admin-web",
+    "build:deploy": "npm run build --workspace=@bpc/shared-types --workspace=@bpc/state-manager --workspace=broadcast-api --workspace=admin-web --workspace=overlay-web",
     "dev:bpc-api": "npm run dev --workspace=broadcast-api",
     "dev:overlay": "npm run dev --workspace=overlay-web",
     "dev:admin": "npm run dev --workspace=admin-web",

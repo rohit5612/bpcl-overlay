@@ -11,6 +11,7 @@ export function loadConnection(): { origin: string; token: string } {
     origin:
       sessionStorage.getItem(ORIGIN_STORAGE) ??
       import.meta.env.VITE_ADMIN_API_ORIGIN ??
+      import.meta.env.VITE_BROADCAST_API_ORIGIN ??
       "http://127.0.0.1:8080",
     token: sessionStorage.getItem(TOKEN_STORAGE) ?? "",
   };
