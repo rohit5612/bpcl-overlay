@@ -1,18 +1,20 @@
-import type {
-  DraftSlot,
-  DraftState,
-  HeroStatsCard,
-  LeagueConfig,
-  LowerThirdState,
-  MatchupCard,
-  OverlayEnvelope,
-  OverlayPatch,
-  PlayerStatsCard,
-  ProductionSettings,
-  SponsorRotationState,
-  StatCarouselState,
-  TournamentHeroAggregate,
-  VisibilityMode,
+import {
+  mergeGameStartCountdown,
+  type DraftSlot,
+  type DraftState,
+  type GameStartCountdown,
+  type HeroStatsCard,
+  type LeagueConfig,
+  type LowerThirdState,
+  type MatchupCard,
+  type OverlayEnvelope,
+  type OverlayPatch,
+  type PlayerStatsCard,
+  type ProductionSettings,
+  type SponsorRotationState,
+  type StatCarouselState,
+  type TournamentHeroAggregate,
+  type VisibilityMode,
 } from "@bpc/shared-types";
 
 function mergeVisibility(
@@ -144,10 +146,10 @@ export function applyOverlayPatch(
     if (patch.timers.gameStartCountdown !== undefined) {
       nextTimers = {
         ...nextTimers,
-        gameStartCountdown: {
-          ...(prev.timers?.gameStartCountdown ?? {}),
-          ...patch.timers.gameStartCountdown,
-        },
+        gameStartCountdown: mergeGameStartCountdown(
+          prev.timers?.gameStartCountdown,
+          patch.timers.gameStartCountdown as Partial<GameStartCountdown>,
+        ),
       };
     }
   }

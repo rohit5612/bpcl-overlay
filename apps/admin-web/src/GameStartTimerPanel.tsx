@@ -1,7 +1,5 @@
-import type { GameStartCountdown, OverlayEnvelope } from "@bpc/shared-types";
+import type { OverlayEnvelope } from "@bpc/shared-types";
 import {
-  buildPausedGameStartCountdown,
-  buildRunningGameStartCountdown,
   DEFAULT_GAME_START_LABEL,
   formatCountdownClock,
   gameStartCountdownRemaining,
@@ -9,6 +7,7 @@ import {
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 
+import { apiFetch, formatApiErrorBody } from "./api";
 import { routeVisible } from "./visibility";
 
 function parseMmSs(mmSs: string): number {
@@ -54,12 +53,18 @@ const inputClass =
 export function GameStartTimerPanel({
   state,
   busy,
-  onPatch,
+  setBusy,
+  setErr,
+  origin,
+  token,
   onVisibility,
 }: {
   state: OverlayEnvelope | null;
   busy: boolean;
-  onPatch: (body: Record<string, unknown>) => Promise<void>;
+  setBusy: (v: boolean) => void;
+  setErr: (e: string | null) => void;
+  origin: string;
+  token: string;
   onVisibility: (visible: boolean) => Promise<void>;
 }) {
   const cd = state?.timers?.gameStartCountdown;
@@ -81,22 +86,31 @@ export function GameStartTimerPanel({
   }, [cd?.label]);
 
   useEffect(() => {
-    if (cd) setMmSs(formatCountdownClock(gameStartCountdownRemaining(cd)));
+    if (!cd) return;
+    if (cd.running) {
+      setMmSs(formatCountdownClock(gameStartCountdownRemaining(cd)));
+    }
   }, [cd?.running, cd?.endsAt, cd?.secondsRemaining]);
 
   const overlayOn = routeVisible("startingsoon", state);
 
-  function pushCountdown(next: GameStartCountdown) {
-    return onPatch({ timers: { gameStartCountdown: next } });
-  }
-
-  function applyTimeFromInput() {
-    const seconds = parseMmSs(mmSs);
-    const nextLabel = label.trim() || DEFAULT_GAME_START_LABEL;
-    if (cd?.running) {
-      void pushCountdown(buildRunningGameStartCountdown(seconds, nextLabel));
-    } else {
-      void pushCountdown(buildPausedGameStartCountdown(seconds, nextLabel));
+  async function timerPost(path: string, body: Record<string, unknown>) {
+    setBusy(true);
+    setErr(null);
+    try {
+      const r = await apiFetch(origin, token, path, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      const t = await r.text();
+      if (!r.ok) {
+        setErr(formatApiErrorBody(t));
+        return;
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -107,8 +121,8 @@ export function GameStartTimerPanel({
           <h2 className="text-lg font-semibold text-sky-200">Game start timer</h2>
           <p className="mt-1 text-xs text-slate-400">
             OBS browser source:{" "}
-            <code className="text-sky-300">/startingsoon</code> — countdown syncs
-            live to all overlays.
+            <code className="text-sky-300">/startingsoon</code> — uses server
+            clock when you click start.
           </p>
         </div>
         <label className="flex items-center gap-2 text-sm text-slate-300">
@@ -149,18 +163,21 @@ export function GameStartTimerPanel({
         <span className="ml-3 text-sm text-slate-500">
           {cd?.running ? "running" : "paused"}
         </span>
+        {cd?.endsAt ? (
+          <span className="mt-1 block text-xs text-slate-600">
+            ends {new Date(cd.endsAt).toLocaleTimeString()}
+          </span>
+        ) : null}
       </p>
 
       <div className="mt-4 flex flex-wrap gap-2">
         <Btn
           disabled={busy}
           onClick={() =>
-            void pushCountdown(
-              buildRunningGameStartCountdown(
-                parseMmSs(mmSs),
-                label.trim() || DEFAULT_GAME_START_LABEL,
-              ),
-            )
+            void timerPost("/api/timers/game-start/start", {
+              seconds: parseMmSs(mmSs),
+              label: label.trim() || DEFAULT_GAME_START_LABEL,
+            })
           }
         >
           start
@@ -169,12 +186,10 @@ export function GameStartTimerPanel({
           variant="ghost"
           disabled={busy || !cd?.running}
           onClick={() =>
-            void pushCountdown(
-              buildPausedGameStartCountdown(
-                gameStartCountdownRemaining(cd),
-                label.trim() || DEFAULT_GAME_START_LABEL,
-              ),
-            )
+            void timerPost("/api/timers/game-start/pause", {
+              seconds: displayRemaining,
+              label: label.trim() || DEFAULT_GAME_START_LABEL,
+            })
           }
         >
           pause
@@ -182,7 +197,12 @@ export function GameStartTimerPanel({
         <Btn
           variant="ghost"
           disabled={busy}
-          onClick={() => void applyTimeFromInput()}
+          onClick={() =>
+            void timerPost("/api/timers/game-start/set", {
+              seconds: parseMmSs(mmSs),
+              label: label.trim() || DEFAULT_GAME_START_LABEL,
+            })
+          }
         >
           apply time
         </Btn>
@@ -190,12 +210,10 @@ export function GameStartTimerPanel({
           variant="ghost"
           disabled={busy}
           onClick={() =>
-            void pushCountdown(
-              buildPausedGameStartCountdown(
-                0,
-                label.trim() || DEFAULT_GAME_START_LABEL,
-              ),
-            )
+            void timerPost("/api/timers/game-start/pause", {
+              seconds: 0,
+              label: label.trim() || DEFAULT_GAME_START_LABEL,
+            })
           }
         >
           reset
@@ -203,9 +221,9 @@ export function GameStartTimerPanel({
       </div>
 
       <p className="mt-3 text-xs text-slate-500">
-        While <strong className="text-sky-300">running</strong>, change the time
-        field and click <strong>apply time</strong> to adjust on the fly.{" "}
-        <strong>Pause</strong> freezes the current value for editing.
+        Click <strong className="text-sky-300">start</strong> after setting time
+        (server sets the deadline). <strong>Apply time</strong> adjusts while
+        running or paused.
       </p>
     </section>
   );

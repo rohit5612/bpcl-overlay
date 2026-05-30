@@ -143,7 +143,10 @@ export function ProducerDashboard() {
           <GameStartTimerPanel
             state={state}
             busy={busy}
-            onPatch={patch}
+            setBusy={setBusy}
+            setErr={setErr}
+            origin={origin}
+            token={token}
             onVisibility={(visible) =>
               patch({
                 overlayVisibility: { startingsoon: visible ? "visible" : "hidden" },

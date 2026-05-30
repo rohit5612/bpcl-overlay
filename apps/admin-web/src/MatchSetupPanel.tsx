@@ -129,6 +129,7 @@ export function MatchSetupPanel({
   );
   const [busy, setBusy] = useState(false);
   const pickPlayersDirtyRef = useRef(false);
+  const matchSetupDirtyRef = useRef(false);
 
   const matchSetup = state?.leagueConfig?.matchSetup;
   const roster = state?.leagueConfig?.roster ?? [];
@@ -145,7 +146,10 @@ export function MatchSetupPanel({
       .catch(() => setTeams([]));
   }, [origin, token, roster.length, state?.updatedAt]);
 
+  // Sync teams/scores from server. Do not depend on pickPlayers arrays — live
+  // STATE_FULL snapshots clone them every tick and would reset unsaved edits.
   useEffect(() => {
+    if (matchSetupDirtyRef.current) return;
     if (matchSetup?.radiantTeamKey) setRadiantKey(matchSetup.radiantTeamKey);
     if (matchSetup?.direTeamKey) setDireKey(matchSetup.direTeamKey);
     if (matchSetup?.seriesBestOf) setSeriesBestOf(matchSetup.seriesBestOf);
@@ -153,16 +157,6 @@ export function MatchSetupPanel({
     if (matchSetup?.scoreA !== undefined) setScoreA(matchSetup.scoreA);
     if (matchSetup?.scoreB !== undefined) setScoreB(matchSetup.scoreB);
     if (matchSetup?.stageLabel !== undefined) setStageLabel(matchSetup.stageLabel);
-    if (!pickPlayersDirtyRef.current) {
-      if (matchSetup?.pickPlayers?.radiant) {
-        setRadiantPickPlayers(
-          normalizePickPlayers(matchSetup.pickPlayers.radiant),
-        );
-      }
-      if (matchSetup?.pickPlayers?.dire) {
-        setDirePickPlayers(normalizePickPlayers(matchSetup.pickPlayers.dire));
-      }
-    }
   }, [
     matchSetup?.radiantTeamKey,
     matchSetup?.direTeamKey,
@@ -171,9 +165,26 @@ export function MatchSetupPanel({
     matchSetup?.scoreA,
     matchSetup?.scoreB,
     matchSetup?.stageLabel,
-    matchSetup?.pickPlayers?.radiant,
-    matchSetup?.pickPlayers?.dire,
   ]);
+
+  const serverRadiantPickPlayers = JSON.stringify(
+    matchSetup?.pickPlayers?.radiant ?? EMPTY_PICK_PLAYERS,
+  );
+  const serverDirePickPlayers = JSON.stringify(
+    matchSetup?.pickPlayers?.dire ?? EMPTY_PICK_PLAYERS,
+  );
+
+  useEffect(() => {
+    if (pickPlayersDirtyRef.current) return;
+    if (matchSetup?.pickPlayers?.radiant) {
+      setRadiantPickPlayers(
+        normalizePickPlayers(matchSetup.pickPlayers.radiant),
+      );
+    }
+    if (matchSetup?.pickPlayers?.dire) {
+      setDirePickPlayers(normalizePickPlayers(matchSetup.pickPlayers.dire));
+    }
+  }, [serverRadiantPickPlayers, serverDirePickPlayers]);
 
   const maxSeriesGame = seriesBestOf;
   const gameOptions = Array.from({ length: maxSeriesGame }, (_, i) => i + 1);
@@ -243,6 +254,7 @@ export function MatchSetupPanel({
         return;
       }
       pickPlayersDirtyRef.current = false;
+      matchSetupDirtyRef.current = false;
       setErr(null);
     } catch (e) {
       setErr(e instanceof Error ? e.message : String(e));
@@ -274,7 +286,10 @@ export function MatchSetupPanel({
               <select
                 className={selectClass}
                 value={radiantKey}
-                onChange={(e) => setRadiantKey(e.target.value)}
+                onChange={(e) => {
+                  matchSetupDirtyRef.current = true;
+                  setRadiantKey(e.target.value);
+                }}
               >
                 <option value="">— select team —</option>
                 {teams.map((t) => (
@@ -291,7 +306,10 @@ export function MatchSetupPanel({
               <select
                 className={selectClass}
                 value={direKey}
-                onChange={(e) => setDireKey(e.target.value)}
+                onChange={(e) => {
+                  matchSetupDirtyRef.current = true;
+                  setDireKey(e.target.value);
+                }}
               >
                 <option value="">— select team —</option>
                 {teams.map((t) => (
@@ -311,9 +329,10 @@ export function MatchSetupPanel({
               <select
                 className={selectClass}
                 value={seriesBestOf}
-                onChange={(e) =>
-                  setSeriesBestOf(Number(e.target.value) as 1 | 3 | 5)
-                }
+                onChange={(e) => {
+                  matchSetupDirtyRef.current = true;
+                  setSeriesBestOf(Number(e.target.value) as 1 | 3 | 5);
+                }}
               >
                 <option value={1}>Best of 1</option>
                 <option value={3}>Best of 3</option>
@@ -327,7 +346,10 @@ export function MatchSetupPanel({
               <select
                 className={selectClass}
                 value={seriesGame}
-                onChange={(e) => setSeriesGame(Number(e.target.value))}
+                onChange={(e) => {
+                  matchSetupDirtyRef.current = true;
+                  setSeriesGame(Number(e.target.value));
+                }}
               >
                 {gameOptions.map((g) => (
                   <option key={g} value={g}>
@@ -346,9 +368,10 @@ export function MatchSetupPanel({
                 max={seriesBestOf}
                 className={selectClass}
                 value={scoreA}
-                onChange={(e) =>
-                  setScoreA(Math.max(0, Number(e.target.value) || 0))
-                }
+                onChange={(e) => {
+                  matchSetupDirtyRef.current = true;
+                  setScoreA(Math.max(0, Number(e.target.value) || 0));
+                }}
               />
             </div>
             <div>
@@ -361,9 +384,10 @@ export function MatchSetupPanel({
                 max={seriesBestOf}
                 className={selectClass}
                 value={scoreB}
-                onChange={(e) =>
-                  setScoreB(Math.max(0, Number(e.target.value) || 0))
-                }
+                onChange={(e) => {
+                  matchSetupDirtyRef.current = true;
+                  setScoreB(Math.max(0, Number(e.target.value) || 0));
+                }}
               />
             </div>
           </div>
@@ -377,7 +401,10 @@ export function MatchSetupPanel({
               className={`${selectClass} mt-1`}
               placeholder="Quarter finals 1"
               value={stageLabel}
-              onChange={(e) => setStageLabel(e.target.value)}
+              onChange={(e) => {
+                matchSetupDirtyRef.current = true;
+                setStageLabel(e.target.value);
+              }}
             />
           </div>
 

@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { gameStartCountdownSchema } from "./game-start-countdown.js";
+import {
+  gameStartCountdownPatchSchema,
+  gameStartCountdownSchema,
+} from "./game-start-countdown.js";
 
 export * from "./hero-assets.js";
 export * from "./hero-slug.js";
@@ -453,7 +456,15 @@ export const overlayPatchSchema = z.object({
       z.null(),
     ])
     .optional(),
-  timers: broadcastTimersSchema.partial().optional(),
+  timers: z
+    .object({
+      pauseMessage: z.string().optional(),
+      startingSoonEta: z.string().optional(),
+      postgameNotes: z.string().optional(),
+      gameStartCountdown: gameStartCountdownPatchSchema.optional(),
+    })
+    .partial()
+    .optional(),
   sceneHints: obsRemoteHintsSchema.partial().optional(),
 });
 

@@ -15,7 +15,7 @@ export function useGameStartCountdown(
   useEffect(() => {
     const tick = () => setRemaining(gameStartCountdownRemaining(cd));
     tick();
-    const id = setInterval(tick, 250);
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [cd?.running, cd?.endsAt, cd?.secondsRemaining, cd?.label]);
 

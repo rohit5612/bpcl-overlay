@@ -1,4 +1,9 @@
 import {
+  buildPausedGameStartCountdown,
+  buildRunningGameStartCountdown,
+  DEFAULT_GAME_START_LABEL,
+  gameStartCountdownRemaining,
+  mergeGameStartCountdown,
   NAMESPACES,
   SOCKET_EVENTS,
   createDefaultEnvelope,
@@ -38,6 +43,7 @@ export function attachRestRoutes(opts: {
       routes: {
         applyPlayerMapping: "POST /api/match/apply-player-mapping",
         matchSetup: "POST /api/match/setup",
+        gameStartTimerStart: "POST /api/timers/game-start/start",
       },
     });
   });
@@ -76,6 +82,80 @@ export function attachRestRoutes(opts: {
     await broadcast.broadcastFull(saved);
     res.json(saved);
   });
+
+  const gameStartTimerBodySchema = z.object({
+    seconds: z.number().int().min(0).max(5999),
+    label: z.string().optional(),
+  });
+
+  async function patchGameStartCountdown(
+    countdown: ReturnType<typeof buildRunningGameStartCountdown>,
+  ) {
+    const next = await state.patchState({
+      timers: { gameStartCountdown: countdown },
+    });
+    await broadcast.broadcastFull(next);
+    return next;
+  }
+
+  app.post(
+    "/api/timers/game-start/start",
+    requireBroadcastAuth,
+    async (req, res) => {
+      const parsed = gameStartTimerBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.flatten() });
+      }
+      const label = parsed.data.label?.trim() || DEFAULT_GAME_START_LABEL;
+      const countdown = buildRunningGameStartCountdown(
+        parsed.data.seconds,
+        label,
+      );
+      const next = await patchGameStartCountdown(countdown);
+      res.json({ ok: true, gameStartCountdown: next.timers?.gameStartCountdown });
+    },
+  );
+
+  app.post(
+    "/api/timers/game-start/pause",
+    requireBroadcastAuth,
+    async (req, res) => {
+      const snap = await state.getState();
+      const prev = snap.timers?.gameStartCountdown;
+      const label =
+        (typeof req.body?.label === "string" ? req.body.label.trim() : "") ||
+        prev?.label ||
+        DEFAULT_GAME_START_LABEL;
+      const seconds =
+        typeof req.body?.seconds === "number"
+          ? req.body.seconds
+          : gameStartCountdownRemaining(prev);
+      const countdown = buildPausedGameStartCountdown(seconds, label);
+      const next = await patchGameStartCountdown(countdown);
+      res.json({ ok: true, gameStartCountdown: next.timers?.gameStartCountdown });
+    },
+  );
+
+  app.post(
+    "/api/timers/game-start/set",
+    requireBroadcastAuth,
+    async (req, res) => {
+      const parsed = gameStartTimerBodySchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: parsed.error.flatten() });
+      }
+      const snap = await state.getState();
+      const prev = snap.timers?.gameStartCountdown;
+      const label = parsed.data.label?.trim() || prev?.label || DEFAULT_GAME_START_LABEL;
+      const countdown = mergeGameStartCountdown(prev, {
+        label,
+        secondsRemaining: parsed.data.seconds,
+        running: prev?.running,
+      });
+      const next = await patchGameStartCountdown(countdown);
+      res.json({ ok: true, gameStartCountdown: next.timers?.gameStartCountdown });
+    },
+  );
 
   const obsCfgSchema = z.object({
     host: z.string(),
