@@ -30,7 +30,16 @@ export function attachRestRoutes(opts: {
   const { app, state, io, broadcast, obs, opendota } = opts;
 
   app.get("/health/live", (_req: Request, res: Response) => {
-    res.json({ ok: true });
+    res.json({
+      ok: true,
+      service: "broadcast-api",
+      /** Bump when deploying; used to confirm apply-player-mapping route is live */
+      build: "2026-05-30",
+      routes: {
+        applyPlayerMapping: "POST /api/match/apply-player-mapping",
+        matchSetup: "POST /api/match/setup",
+      },
+    });
   });
 
   app.get("/health/ready", async (_req: Request, res: Response) => {

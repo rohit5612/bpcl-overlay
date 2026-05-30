@@ -1,6 +1,6 @@
+import { existsSync } from "node:fs";
 import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 
 import type {
   PlayerHeroLeagueStats,
@@ -40,8 +40,14 @@ export type LeagueStatsSnapshot = {
   meta: LeagueStatsMeta;
 };
 
-const moduleDir = path.dirname(fileURLToPath(import.meta.url));
+function defaultLeagueStatsDirCandidates(): string[] {
+  return [
+    path.resolve(process.cwd(), "data/league-stats"),
+    path.resolve(process.cwd(), "apps/broadcast-api/data/league-stats"),
+  ];
+}
 
+/** Directory for league_{id}_heroes.csv (supports PM2 cwd at repo root or apps/broadcast-api). */
 export function leagueStatsDir(): string {
   const configured = env.LEAGUE_STATS_DIR?.trim();
   if (configured) {
@@ -49,7 +55,44 @@ export function leagueStatsDir(): string {
       ? configured
       : path.resolve(process.cwd(), configured);
   }
-  return path.resolve(moduleDir, "../../data/league-stats");
+  const leagueId = env.LEAGUE_ID;
+  for (const dir of defaultLeagueStatsDirCandidates()) {
+    if (existsSync(path.join(dir, `league_${leagueId}_heroes.csv`))) {
+      return dir;
+    }
+  }
+  for (const dir of defaultLeagueStatsDirCandidates()) {
+    if (existsSync(dir)) return dir;
+  }
+  return defaultLeagueStatsDirCandidates()[0];
+}
+
+export function leagueStatsCsvMissingPayload(leagueId: number) {
+  const dir = leagueStatsDir();
+  const paths = leagueStatsPaths(leagueId);
+  return {
+    code: "league_stats_csv_missing" as const,
+    error: `No league stats CSV for league ${leagueId}. Click "fetch league stats" in admin (needs STEAM_WEB_API_KEY), or copy league_${leagueId}_heroes.csv into ${dir}`,
+    leagueId,
+    statsDir: dir,
+    expectedFiles: [paths.heroes, paths.playerHeroes],
+  };
+}
+
+export function leagueStatsCsvLoadFailedPayload(
+  leagueId: number,
+  statsStorage: Awaited<ReturnType<typeof leagueStatsFileInfo>>,
+) {
+  const dir = leagueStatsDir();
+  const paths = leagueStatsPaths(leagueId);
+  return {
+    code: "league_stats_csv_load_failed" as const,
+    error: `League CSV is on disk (${dir}) but could not be loaded into memory. Check file permissions and CSV format, then click "reload CSV".`,
+    leagueId,
+    statsDir: dir,
+    expectedFiles: [paths.heroes, paths.playerHeroes],
+    statsStorage,
+  };
 }
 
 export function leagueStatsPaths(leagueId: number) {

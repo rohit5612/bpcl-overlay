@@ -16,6 +16,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: "production",
+        // cwd is apps/broadcast-api — keep league CSVs in ./data/league-stats or set LEAGUE_STATS_DIR
       },
     },
   ],

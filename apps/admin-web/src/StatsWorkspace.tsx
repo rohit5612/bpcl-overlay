@@ -2,7 +2,7 @@ import type { OverlayEnvelope } from "@bpc/shared-types";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useState } from "react";
 
-import { apiFetch } from "./api";
+import { apiFetch, formatApiErrorBody } from "./api";
 import { HeroSearchSelect, type HeroMeta } from "./HeroSearchSelect";
 
 const selectClass =
@@ -115,7 +115,7 @@ export function StatsWorkspace({
         });
         const t = await r.text();
         if (!r.ok) {
-          setErr(t.slice(0, 400));
+          setErr(formatApiErrorBody(t));
           return null;
         }
         setErr(null);
@@ -224,12 +224,25 @@ export function StatsWorkspace({
               ) : (
                 <span className="text-amber-400">no heroes CSV yet</span>
               )}
+              {leagueInfo.statsStorage.playerHeroesExists ? (
+                <span className="text-emerald-400"> · player×hero file found</span>
+              ) : (
+                <span className="text-amber-400"> · no player×hero CSV (needed for roster resolve)</span>
+              )}
               {leagueInfo.statsDir ? (
                 <>
                   {" "}
                   · <code className="text-sky-300/80">{leagueInfo.statsDir}</code>
                 </>
               ) : null}
+            </p>
+          ) : null}
+          {leagueInfo?.statsStorage?.heroesExists &&
+          lc?.aggregationStatus !== "ready" ? (
+            <p className="text-xs text-sky-300/90">
+              Files are on disk but not loaded into the API yet — click{" "}
+              <strong>reload CSV</strong>, then <strong>resolve stats</strong> after
+              roster upload.
             </p>
           ) : null}
           {!leagueInfo?.steamApiConfigured ? (

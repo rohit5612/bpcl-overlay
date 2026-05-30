@@ -16,6 +16,17 @@ export function loadConnection(): { origin: string; token: string } {
   };
 }
 
+/** Extract a human-readable message from broadcast-api JSON error bodies. */
+export function formatApiErrorBody(text: string): string {
+  try {
+    const body = JSON.parse(text) as { error?: string; code?: string };
+    if (typeof body.error === "string") return body.error;
+  } catch {
+    /* plain text */
+  }
+  return text.slice(0, 400);
+}
+
 export async function apiFetch(
   origin: string,
   token: string,

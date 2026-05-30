@@ -20,6 +20,8 @@ import {
   runLeagueAggregation,
 } from "./services/league-bootstrap.js";
 import {
+  leagueStatsCsvLoadFailedPayload,
+  leagueStatsCsvMissingPayload,
   leagueStatsDir,
   leagueStatsFileInfo,
   summarizePlayerLeagueFromIndex,
@@ -119,9 +121,11 @@ export function attachLeagueAndStatsRoutes(opts: {
         broadcast,
       });
       if (!ok) {
-        return res.status(404).json({
-          error: `No CSV found for league ${env.LEAGUE_ID}. Run "Fetch league stats" once, or place league_${env.LEAGUE_ID}_heroes.csv in ${leagueStatsDir()}`,
-        });
+        const csvInfo = await leagueStatsFileInfo(env.LEAGUE_ID);
+        const payload = csvInfo.heroesExists
+          ? leagueStatsCsvLoadFailedPayload(env.LEAGUE_ID, csvInfo)
+          : { ...leagueStatsCsvMissingPayload(env.LEAGUE_ID), statsStorage: csvInfo };
+        return res.status(422).json(payload);
       }
       const snap = await state.getState();
       res.json({ ok: true, leagueConfig: snap.leagueConfig });
@@ -248,10 +252,10 @@ export function attachLeagueAndStatsRoutes(opts: {
         broadcast,
       });
       if (!loaded) {
-        return res.status(404).json({
-          error: `No CSV found for league ${env.LEAGUE_ID}. Run fetch league stats or place CSV files in ${leagueStatsDir()}`,
-          statsStorage: csvInfo,
-        });
+        const payload = csvInfo.heroesExists
+          ? leagueStatsCsvLoadFailedPayload(env.LEAGUE_ID, csvInfo)
+          : { ...leagueStatsCsvMissingPayload(env.LEAGUE_ID), statsStorage: csvInfo };
+        return res.status(422).json(payload);
       }
 
       const after = await state.getState();

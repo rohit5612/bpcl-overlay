@@ -1,7 +1,7 @@
 import type { OverlayEnvelope } from "@bpc/shared-types";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import { apiFetch } from "./api";
+import { apiFetch, formatApiErrorBody } from "./api";
 
 type TeamInfo = {
   teamKey: string;
@@ -205,7 +205,7 @@ export function MatchSetupPanel({
       });
       const t = await r.text();
       if (!r.ok) {
-        setErr(t.slice(0, 400));
+        setErr(formatApiErrorBody(t));
         return;
       }
       pickPlayersDirtyRef.current = false;
@@ -239,7 +239,7 @@ export function MatchSetupPanel({
       });
       const t = await r.text();
       if (!r.ok) {
-        setErr(t.slice(0, 400));
+        setErr(formatApiErrorBody(t));
         return;
       }
       pickPlayersDirtyRef.current = false;
