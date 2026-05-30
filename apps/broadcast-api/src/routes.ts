@@ -3,7 +3,6 @@ import {
   buildRunningGameStartCountdown,
   DEFAULT_GAME_START_LABEL,
   gameStartCountdownRemaining,
-  mergeGameStartCountdown,
   NAMESPACES,
   SOCKET_EVENTS,
   createDefaultEnvelope,
@@ -147,11 +146,9 @@ export function attachRestRoutes(opts: {
       const snap = await state.getState();
       const prev = snap.timers?.gameStartCountdown;
       const label = parsed.data.label?.trim() || prev?.label || DEFAULT_GAME_START_LABEL;
-      const countdown = mergeGameStartCountdown(prev, {
-        label,
-        secondsRemaining: parsed.data.seconds,
-        running: prev?.running,
-      });
+      const countdown = prev?.running
+        ? buildRunningGameStartCountdown(parsed.data.seconds, label)
+        : buildPausedGameStartCountdown(parsed.data.seconds, label);
       const next = await patchGameStartCountdown(countdown);
       res.json({ ok: true, gameStartCountdown: next.timers?.gameStartCountdown });
     },

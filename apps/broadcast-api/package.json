@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "npm run build --workspace=@bpc/shared-types && npm run build --workspace=@bpc/state-manager && tsc -p tsconfig.json",
-    "dev": "npm run build --workspace=@bpc/state-manager && tsx watch src/index.ts",
+    "dev": "npm run build --workspace=@bpc/shared-types --workspace=@bpc/state-manager && tsx watch src/index.ts",
     "start": "node dist/index.js",
     "lint": "echo \"no linter configured\""
   },
