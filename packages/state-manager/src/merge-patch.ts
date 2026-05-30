@@ -139,16 +139,17 @@ export function applyOverlayPatch(
 
   let nextTimers = prev.timers;
   if (patch.timers !== undefined) {
+    const { gameStartCountdown: cdPatch, ...restTimers } = patch.timers;
     nextTimers = {
       ...(prev.timers ?? {}),
-      ...patch.timers,
+      ...restTimers,
     };
-    if (patch.timers.gameStartCountdown !== undefined) {
+    if (cdPatch !== undefined) {
       nextTimers = {
         ...nextTimers,
         gameStartCountdown: mergeGameStartCountdown(
           prev.timers?.gameStartCountdown,
-          patch.timers.gameStartCountdown as Partial<GameStartCountdown>,
+          cdPatch,
         ),
       };
     }
