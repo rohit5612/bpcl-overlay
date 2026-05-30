@@ -1,0 +1,10 @@
+# Admin producer dashboard (monorepo root deploy).
+# Netlify site settings should use publish path: apps/admin-web/dist
+# (or leave publish empty and rely on this file).
+
+[build]
+  command = "npm ci && npm run build:admin"
+  publish = "apps/admin-web/dist"
+
+[build.environment]
+  NODE_VERSION = "22"

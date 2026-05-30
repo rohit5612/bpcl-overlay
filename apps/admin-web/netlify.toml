@@ -1,5 +1,4 @@
-# Admin site — Netlify cwd is usually repo root (no base dir). If base is apps/admin-web, use cd ../.. in command.
-
-[build]
-  command = "npm ci && npm run build:admin"
-  publish = "apps/admin-web/dist"
+# Admin Netlify config lives at repo root: ../../netlify.toml
+# Netlify only reads netlify.toml from the repository root unless
+# "Base directory" is set to apps/admin-web (then use publish = "dist"
+# and command = "cd ../.. && npm ci && npm run build:admin").
